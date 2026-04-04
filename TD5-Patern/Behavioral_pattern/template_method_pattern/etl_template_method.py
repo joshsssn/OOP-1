@@ -1,151 +1,104 @@
-"""
-Template Method Pattern - Data ETL Pipeline
-=============================================
-Refactored from three copy-pasted pipeline classes
-into a base class with a fixed algorithm skeleton
-and subclasses that only override what's unique.
-
-Problems with the original implementation:
-──────────────────────────────────────────
-1. MASSIVE DUPLICATION — The validation logic is copy-pasted
-   3 times, the cleanup logic 3 times, the load logic 3 times.
-   A bug fix in one must be manually replicated to all others.
-
-2. WORKFLOW NOT ENFORCED — Nothing prevents a subclass from
-   skipping validation or cleanup. Each pipeline defines its
-   own run() with its own step order — if one developer forgets
-   a step, it silently fails.
-
-3. CROSS-CUTTING CHANGES ARE PAINFUL — Want to add logging
-   or timing to all pipelines? You must edit all three run()
-   methods identically. With 10 pipelines, that's 10 edits.
-
-4. INCONSISTENT STEP ORDER — Nothing guarantees that CSV,
-   API, and Database pipelines execute steps in the same
-   order. One could validate before transform by accident.
-
-5. NO HOOK POINTS — There's no way to inject optional behavior
-   (like sending a notification after load) without modifying
-   the entire run() method in each class.
-"""
-
 import time
 from abc import ABC, abstractmethod
 
-
-# ─────────────────────────────────────────────
-# 1. Abstract Base Class (template method)
-# ─────────────────────────────────────────────
-
 class DataPipeline(ABC):
-    """
-    Defines the ETL workflow skeleton in run().
-    Subclasses override only the steps that differ:
-    extract(), transform(), validate().
-
-    Common steps (connect, load, cleanup) are implemented
-    once here and shared by all pipelines.
-    """
-
     def __init__(self, source: str):
         self._source = source
         self._data = None
 
-    # ── Template Method (fixed skeleton — do NOT override) ──
-
     def run(self) -> str:
-        """
-        The template method. Defines the algorithm's step order.
-        Subclasses cannot change this order — only the individual steps.
-        """
         self._connect()
-        self._before_extract()          # hook (optional)
+        self._before_extract()
         self._data = self._extract()
         self._data = self._transform(self._data)
         self._validate(self._data)
         self._load(self._data)
-        self._after_load()              # hook (optional)
+        self._after_load()
         self._cleanup()
         return f"{self.__class__.__name__} finished successfully"
 
-    # ── Common steps (implemented once, shared by all) ──
-
     def _connect(self) -> None:
-        """Connect to the data source."""
-        print(f"  Connecting to: {self._source}")
+        print(f"Connecting to: {self._source}")
         time.sleep(0.3)
-        print("  Connection established")
 
     def _load(self, data: list) -> None:
-        """Load transformed data to destination."""
-        print(f"  Loading {len(data)} records to destination...")
-        time.sleep(0.3)
-        print(f"  Loaded {len(data)} records successfully")
+        print(f"Loading {len(data)} records")
 
     def _cleanup(self) -> None:
-        """Release resources."""
-        print("  Cleaning up resources...")
         self._data = None
-        print("  Cleanup complete")
-
-    # ── Hook methods (optional — subclasses CAN override) ──
 
     def _before_extract(self) -> None:
-        """Hook: called before extraction. Override for custom logic."""
         pass
 
     def _after_load(self) -> None:
-        """Hook: called after loading. Override for notifications, etc."""
         pass
-
-    # ── Abstract methods (subclasses MUST override) ──
 
     @abstractmethod
     def _extract(self) -> list:
-        """Extract data from source. Each pipeline has its own logic."""
         pass
 
     @abstractmethod
     def _transform(self, data: list) -> list:
-        """Transform extracted data. Each pipeline has its own rules."""
         pass
 
     @abstractmethod
     def _validate(self, data: list) -> None:
-        """Validate data integrity. Each pipeline checks different fields."""
         pass
-
-
-# ─────────────────────────────────────────────
-# 2. Concrete Pipelines
-# ─────────────────────────────────────────────
 
 class CSVPipeline(DataPipeline):
-    """ETL pipeline for CSV file sources."""
+    def _connect(self) -> None:
+        print(f"CSVPipeline connecting to {self._source}")
 
     def _extract(self) -> list:
-        print("  Extracting data from CSV file...")
-        data = [
-            {"id": 1, "name": "Alice", "age": 30},
-            {"id": 2, "name": "Bob", "age": 25}
-        ]
-        print(f"  Extracted {len(data)} records from CSV")
-        return data
+        return [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
 
     def _transform(self, data: list) -> list:
-        print("  Transforming CSV data...")
-        for record in data:
-            record["age"] = int(record["age"])
-            record["name"] = record["name"].upper()
-        print("  CSV transformation complete")
         return data
 
     def _validate(self, data: list) -> None:
-        print("  Validating CSV data...")
-        for record in data:
-            if "id" not in record or "name" not in record:
-                raise ValueError("CSV record missing required fields: id, name")
-        print("  CSV validation passed")
+        pass
+
+class APIPipeline(DataPipeline):
+    def _connect(self) -> None:
+        print(f"APIPipeline connecting to {self._source}")
+
+    def _extract(self) -> list:
+        return [{"id": 3, "name": "Charlie"}]
+
+    def _transform(self, data: list) -> list:
+        return data
+
+    def _validate(self, data: list) -> None:
+        pass
+
+class DatabasePipeline(DataPipeline):
+    def _connect(self) -> None:
+        print(f"DatabasePipeline connecting to {self._source}")
+
+    def _extract(self) -> list:
+        return [{"id": 4, "name": "Dave"}]
+
+    def _transform(self, data: list) -> list:
+        return data
+
+    def _validate(self, data: list) -> None:
+        pass
+
+class XMLPipeline(DataPipeline):
+    def _connect(self) -> None:
+        print(f"XMLPipeline connecting to {self._source}")
+
+    def _extract(self) -> list:
+        return [{"id": 5, "name": "Eve"}]
+
+    def _transform(self, data: list) -> list:
+        return data
+
+    def _validate(self, data: list) -> None:
+        pass
+
+    def _after_load(self) -> None:
+        print("XMLPipeline finished loading")
 
 
 class APIPipeline(DataPipeline):

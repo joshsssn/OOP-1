@@ -1,153 +1,67 @@
-"""
-Strategy Pattern - Report Generator
-=====================================
-Refactored from a single class with if/elif chains
-into interchangeable format strategies.
-
-Problems with the original implementation:
-──────────────────────────────────────────
-1. OPEN/CLOSED VIOLATION — Adding a new format (XML, HTML, Markdown)
-   requires modifying the existing generate_report() AND save_report()
-   methods. Every change risks breaking existing formats.
-
-2. SINGLE RESPONSIBILITY VIOLATION — One class handles PDF formatting,
-   Excel formatting, CSV formatting, JSON formatting, AND file saving.
-   That's at least 5 reasons to change.
-
-3. CODE DUPLICATION — The save_report() method repeats the same
-   if/elif structure as generate_report(). Every new format must be
-   added in TWO places, doubling the maintenance cost.
-
-4. UNTESTABLE IN ISOLATION — You can't test PDF generation without
-   also having CSV, JSON, Excel code loaded. Each format's logic is
-   tangled inside one method, making unit tests coarse-grained.
-
-5. NO RUNTIME FLEXIBILITY — The format is passed as a string, so
-   there's no way to inject a custom formatter or swap strategies
-   dynamically without touching the core if/elif chain.
-"""
-
 import json
 from abc import ABC, abstractmethod
 
-
-# ─────────────────────────────────────────────
-# 1. Strategy Interface
-# ─────────────────────────────────────────────
-
 class FormatStrategy(ABC):
-    """
-    Contract for all format strategies.
-    Each strategy knows how to format data AND
-    what file extension it produces.
-    """
-
     @abstractmethod
     def format_report(self, data: list) -> str:
-        """Format the data into a report string."""
         pass
 
     @abstractmethod
     def get_extension(self) -> str:
-        """Return the file extension (e.g. '.csv')."""
         pass
 
-
-# ─────────────────────────────────────────────
-# 2. Concrete Strategies
-# ─────────────────────────────────────────────
-
 class PDFFormatStrategy(FormatStrategy):
-    """Formats report as a styled PDF-like text output."""
-
     def format_report(self, data: list) -> str:
-        report = "PDF REPORT\n"
-        report += "=" * 50 + "\n"
-        for item in data:
-            report += f"| {item['name']:20} | {item['value']:10} |\n"
-        report += "=" * 50 + "\n"
-        report += "End of PDF Report"
-        return report
+        return f"PDF Report: {data}"
 
     def get_extension(self) -> str:
         return ".pdf"
 
-
 class ExcelFormatStrategy(FormatStrategy):
-    """Formats report as tab-separated values (Excel-like)."""
-
     def format_report(self, data: list) -> str:
-        report = "EXCEL REPORT\n"
-        report += "-" * 50 + "\n"
-        report += "Name\tValue\n"
-        for item in data:
-            report += f"{item['name']}\t{item['value']}\n"
-        report += "-" * 50 + "\n"
-        return report
+        return f"Excel Report: {data}"
 
     def get_extension(self) -> str:
         return ".xlsx"
 
-
 class CSVFormatStrategy(FormatStrategy):
-    """Formats report as comma-separated values."""
-
     def format_report(self, data: list) -> str:
-        report = "name,value\n"
-        for item in data:
-            report += f"{item['name']},{item['value']}\n"
-        return report
+        return f"CSV Report: {data}"
 
     def get_extension(self) -> str:
         return ".csv"
 
-
 class JSONFormatStrategy(FormatStrategy):
-    """Formats report as pretty-printed JSON."""
-
     def format_report(self, data: list) -> str:
-        return json.dumps(data, indent=2)
+        return json.dumps(data)
 
     def get_extension(self) -> str:
         return ".json"
 
+class HTMLFormatStrategy(FormatStrategy):
+    def format_report(self, data: list) -> str:
+        return f"<html><body>{data}</body></html>"
 
-# ─────────────────────────────────────────────
-# 3. Context Class
-# ─────────────────────────────────────────────
+    def get_extension(self) -> str:
+        return ".html"
 
 class ReportGenerator:
-    """
-    Context that holds data and delegates formatting
-    to whichever strategy is currently set.
-    The strategy can be swapped at runtime.
-    """
-
     def __init__(self, data: list):
         self._data = data
-        self._strategy: FormatStrategy = None
+        self._strategy = None
 
     def set_strategy(self, strategy: FormatStrategy) -> None:
-        """Swap the format strategy at runtime."""
         self._strategy = strategy
 
     def generate_report(self) -> str:
-        """Delegate formatting to the current strategy."""
-        if not self._strategy:
-            raise ValueError("No format strategy set. Call set_strategy() first.")
-        return self._strategy.format_report(self._data)
+        if self._strategy:
+            return self._strategy.format_report(self._data)
+        return ""
 
     def save_report(self, filename: str) -> None:
-        """Save the formatted report with the correct extension."""
-        if not self._strategy:
-            raise ValueError("No format strategy set. Call set_strategy() first.")
-
-        content = self.generate_report()
-        full_path = filename + self._strategy.get_extension()
-
-        with open(full_path, "w") as f:
-            f.write(content)
-        print(f"Report saved to '{full_path}'")
+        if self._strategy:
+            with open(filename + self._strategy.get_extension(), "w") as f:
+                f.write(self.generate_report())
 
 
 # ─────────────────────────────────────────────

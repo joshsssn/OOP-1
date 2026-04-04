@@ -1,24 +1,6 @@
-"""
-Decorator Pattern - Order Pricing System
-=========================================
-Refactored from a single method with boolean flag explosion
-into stackable Decorators that each add one feature to an order.
-Each decorator wraps the previous one like layers of an onion.
-"""
-
 from abc import ABC, abstractmethod
 
-
-# ─────────────────────────────────────────────
-# 1. The Interface (component)
-# ─────────────────────────────────────────────
-
 class OrderComponent(ABC):
-    """
-    Contract for all orders and decorators.
-    Both BaseOrder and every decorator implement this.
-    """
-
     @abstractmethod
     def get_cost(self) -> float:
         pass
@@ -27,14 +9,7 @@ class OrderComponent(ABC):
     def get_description(self) -> str:
         pass
 
-
-# ─────────────────────────────────────────────
-# 2. The Base (concrete component)
-# ─────────────────────────────────────────────
-
 class BaseOrder(OrderComponent):
-    """Simple order with just a base price."""
-
     def __init__(self, base_price: float):
         self._base_price = base_price
 
@@ -42,19 +17,9 @@ class BaseOrder(OrderComponent):
         return self._base_price
 
     def get_description(self) -> str:
-        return f"Base order: {self._base_price}€"
-
-
-# ─────────────────────────────────────────────
-# 3. Abstract Decorator (common wrapper logic)
-# ─────────────────────────────────────────────
+        return f"Base order"
 
 class OrderDecorator(OrderComponent, ABC):
-    """
-    Base decorator that wraps any OrderComponent.
-    All concrete decorators inherit from this.
-    """
-
     def __init__(self, wrapped: OrderComponent):
         self._wrapped = wrapped
 
@@ -64,85 +29,44 @@ class OrderDecorator(OrderComponent, ABC):
     def get_description(self) -> str:
         return self._wrapped.get_description()
 
-
-# ─────────────────────────────────────────────
-# 4. Concrete Decorators (one per feature)
-# ─────────────────────────────────────────────
-
 class ExpressShippingDecorator(OrderDecorator):
-    """Adds flat 15€ express shipping fee."""
-
-    def __init__(self, wrapped: OrderComponent):
-        super().__init__(wrapped)
-        self._shipping_cost = 15.00
-
     def get_cost(self) -> float:
-        return self._wrapped.get_cost() + self._shipping_cost
+        return super().get_cost() + 15.0
 
     def get_description(self) -> str:
-        return self._wrapped.get_description() + f"\n  + Express shipping: +{self._shipping_cost}€"
-
+        return super().get_description() + " + express shipping"
 
 class InsuranceDecorator(OrderDecorator):
-    """Adds 5% insurance based on current cost."""
-
-    def __init__(self, wrapped: OrderComponent):
-        super().__init__(wrapped)
-        self._rate = 0.05
-
     def get_cost(self) -> float:
-        current = self._wrapped.get_cost()
-        return current + (current * self._rate)
+        return super().get_cost() * 1.05
 
     def get_description(self) -> str:
-        insurance_amount = self._wrapped.get_cost() * self._rate
-        return self._wrapped.get_description() + f"\n  + Insurance (5%): +{insurance_amount:.2f}€"
-
+        return super().get_description() + " + insurance"
 
 class GiftWrapDecorator(OrderDecorator):
-    """Adds flat 5€ gift wrapping fee."""
-
-    def __init__(self, wrapped: OrderComponent):
-        super().__init__(wrapped)
-        self._wrap_cost = 5.00
-
     def get_cost(self) -> float:
-        return self._wrapped.get_cost() + self._wrap_cost
+        return super().get_cost() + 5.0
 
     def get_description(self) -> str:
-        return self._wrapped.get_description() + f"\n  + Gift wrap: +{self._wrap_cost}€"
-
+        return super().get_description() + " + gift wrap"
 
 class DiscountDecorator(OrderDecorator):
-    """Applies a percentage discount on current total."""
-
     def __init__(self, wrapped: OrderComponent, percent: float):
         super().__init__(wrapped)
         self._percent = percent
 
     def get_cost(self) -> float:
-        current = self._wrapped.get_cost()
-        return current - (current * self._percent / 100)
+        return super().get_cost() * (1 - self._percent / 100)
 
     def get_description(self) -> str:
-        discount_amount = self._wrapped.get_cost() * self._percent / 100
-        return self._wrapped.get_description() + f"\n  - Discount ({self._percent}%): -{discount_amount:.2f}€"
-
+        return super().get_description() + f" - discount"
 
 class PremiumMemberDecorator(OrderDecorator):
-    """Applies a 10% premium member discount."""
-
-    def __init__(self, wrapped: OrderComponent):
-        super().__init__(wrapped)
-        self._discount_rate = 0.10
-
     def get_cost(self) -> float:
-        current = self._wrapped.get_cost()
-        return current - (current * self._discount_rate)
+        return super().get_cost() * 0.90
 
     def get_description(self) -> str:
-        discount_amount = self._wrapped.get_cost() * self._discount_rate
-        return self._wrapped.get_description() + f"\n  - Premium member (10%): -{discount_amount:.2f}€"
+        return super().get_description() + " - premium discount"
 
 
 # ─────────────────────────────────────────────

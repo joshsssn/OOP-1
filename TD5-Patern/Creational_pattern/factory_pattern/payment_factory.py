@@ -1,132 +1,49 @@
-"""
-Payment Factory Pattern - Refactored Solution
-==============================================
-Refactored from a single spaghetti if/elif function
-into a clean Factory Pattern architecture following
-the Open/Closed Principle (SOLID).
-"""
-
 from abc import ABC, abstractmethod
 
-
-# ─────────────────────────────────────────────
-# 1. The Interface (Abstract Base Class)
-# ─────────────────────────────────────────────
-
 class PaymentProcessor(ABC):
-    """
-    Abstract base class defining the contract
-    that every payment processor must follow.
-    """
-
     @abstractmethod
     def validate(self, details: dict) -> bool:
-        """Validate payment details before processing."""
         pass
 
     @abstractmethod
     def process(self, amount: float, details: dict) -> dict:
-        """Process the payment and return a result dict."""
         pass
 
-
-# ─────────────────────────────────────────────
-# 2. Concrete Implementations
-# ─────────────────────────────────────────────
-
 class CreditCardProcessor(PaymentProcessor):
-    """Handles credit card payments with a 2.9% fee."""
-
     def __init__(self):
         self._fee_rate = 0.029
 
     def validate(self, details: dict) -> bool:
-        card_number = details.get("card_number")
-        cvv = details.get("cvv")
-
-        if not card_number or len(card_number) != 16:
-            raise ValueError("Invalid card number")
-        if not cvv or len(cvv) != 3:
-            raise ValueError("Invalid CVV")
-
         return True
 
     def process(self, amount: float, details: dict) -> dict:
         self.validate(details)
-        fee = amount * self._fee_rate
-        total = amount + fee
-        return {
-            "success": True,
-            "method": "credit_card",
-            "amount": round(total, 2),
-            "fee": round(fee, 2)
-        }
-
+        return {"success": True, "amount": amount + (amount * self._fee_rate)}
 
 class BankTransferProcessor(PaymentProcessor):
-    """Handles bank transfers with a flat 1.50€ fee."""
-
     def __init__(self):
         self._flat_fee = 1.50
 
     def validate(self, details: dict) -> bool:
-        iban = details.get("iban")
-
-        if not iban or len(iban) < 15:
-            raise ValueError("Invalid IBAN")
-
         return True
 
     def process(self, amount: float, details: dict) -> dict:
         self.validate(details)
-        fee = self._flat_fee
-        total = amount + fee
-        return {
-            "success": True,
-            "method": "bank_transfer",
-            "amount": round(total, 2),
-            "fee": round(fee, 2)
-        }
-
+        return {"success": True, "amount": amount + self._flat_fee}
 
 class PayPalProcessor(PaymentProcessor):
-    """Handles PayPal payments with a 3.4% + 0.30€ fee."""
-
     def __init__(self):
         self._fee_rate = 0.034
         self._fixed_fee = 0.30
 
     def validate(self, details: dict) -> bool:
-        email = details.get("email")
-
-        if not email or "@" not in email:
-            raise ValueError("Invalid PayPal email")
-
         return True
 
     def process(self, amount: float, details: dict) -> dict:
         self.validate(details)
-        fee = amount * self._fee_rate + self._fixed_fee
-        total = amount + fee
-        return {
-            "success": True,
-            "method": "paypal",
-            "amount": round(total, 2),
-            "fee": round(fee, 2)
-        }
-
-
-# ─────────────────────────────────────────────
-# 3. The Factory
-# ─────────────────────────────────────────────
+        return {"success": True, "amount": amount + (amount * self._fee_rate) + self._fixed_fee}
 
 class PaymentFactory:
-    """
-    Factory that maps payment type strings to
-    their corresponding processor classes.
-    Uses a dict instead of if/elif chains.
-    """
-
     def __init__(self):
         self._processors = {
             "credit_card": CreditCardProcessor,
@@ -135,15 +52,9 @@ class PaymentFactory:
         }
 
     def get_processor(self, payment_type: str) -> PaymentProcessor:
-        """
-        Returns an instance of the matching processor.
-        Raises ValueError if the type is unknown.
-        """
         processor_class = self._processors.get(payment_type)
-
         if not processor_class:
-            raise ValueError(f"Unknown payment type: {payment_type}")
-
+            raise ValueError("Unknown payment type")
         return processor_class()
 
     def register(self, payment_type: str, processor_class: type) -> None:
