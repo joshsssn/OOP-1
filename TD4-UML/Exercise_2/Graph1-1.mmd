@@ -1,0 +1,16 @@
+graph LR
+    Member(["👤 Member"])
+    Clerk(["👤 Order Processing Clerk"])
+
+    PO(("Place Order"))
+    VM(("Verify Membership"))
+    PRO(("Process Order"))
+    MP(("Make Payment"))
+
+    Member --> PO
+    Member --> MP
+    Clerk --> VM
+    Clerk --> PRO
+
+    PO -->|<<include>>| VM
+    PRO -->|<<include>>| MP

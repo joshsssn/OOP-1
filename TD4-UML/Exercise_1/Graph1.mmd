@@ -1,0 +1,39 @@
+classDiagram
+    class Patient {
+        - id : String
+        - name : String
+        - password : String
+        - email : String
+        + submitHealthProblem()
+        + makePayment()
+        + receivePrescription()
+    }
+
+    class Doctor {
+        - id : String
+        - name : String
+        - specialty : String
+        - password : String
+        + consultProblem()
+        + providePrescription()
+        + receivePayment()
+    }
+
+    class Organizer {
+        - id : String
+        - name : String
+        - password : String
+        - role : String
+        + readProblem()
+        + forwardPrescription()
+        + forwardPayment()
+        + maintainDatabase()
+        + issueMemberCredentials()
+    }
+
+    Patient "1" --> "1" Organizer : submits problem to
+    Organizer "1" --> "1..*" Doctor : consults
+    Doctor "1..*" --> "1" Organizer : sends prescription to
+    Organizer "1" --> "1" Patient : forwards prescription to
+    Patient "1" --> "1" Organizer : pays
+    Organizer "1" --> "1..*" Doctor : forwards payment to

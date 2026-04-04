@@ -1,0 +1,102 @@
+classDiagram
+    class Patient {
+        - id : String
+        - name : String
+        - password : String
+        - email : String
+        + submitHealthProblem()
+        + makePayment()
+        + receivePrescription()
+    }
+
+    class Doctor {
+        - id : String
+        - name : String
+        - specialty : String
+        - password : String
+        + consultProblem()
+        + providePrescription()
+        + receivePayment()
+    }
+
+    class Organizer {
+        - id : String
+        - name : String
+        - password : String
+        - role : String
+        + readProblem()
+        + forwardPrescription()
+        + forwardPayment()
+        + maintainDatabase()
+        + issueMemberCredentials()
+    }
+
+    class HealthProblem {
+        - problemId : String
+        - description : String
+        - dateSubmitted : Date
+        - status : String
+        + getDetails()
+        + updateStatus()
+    }
+
+    class Prescription {
+        - prescriptionId : String
+        - medication : String
+        - instructions : String
+        - dateIssued : Date
+        + getDetails()
+        + validate()
+    }
+
+    class Payment {
+        - paymentId : String
+        - amount : Float
+        - date : Date
+        - status : String
+        + process()
+        + getStatus()
+    }
+
+    class Check {
+        - checkNumber : String
+        - bankName : String
+        + process()
+    }
+
+    class Cash {
+        - amountGiven : Float
+        - change : Float
+        + process()
+    }
+
+    class CreditCard {
+        - cardNumber : String
+        - expiryDate : String
+        + process()
+    }
+
+    %% Inheritance: payment subtypes
+    Payment <|-- Check
+    Payment <|-- Cash
+    Payment <|-- CreditCard
+
+    %% Composition: HealthProblem cannot exist without Patient
+    Patient "1" *-- "1..*" HealthProblem : owns
+
+    %% Composition: Prescription cannot exist without HealthProblem
+    HealthProblem "1" *-- "0..1" Prescription : generates
+
+    %% Composition: Payment cannot exist without Prescription
+    Prescription "1" *-- "0..1" Payment : triggers
+
+    %% Actor associations - problem flow
+    Patient "1" --> "1" Organizer : submits problem to
+    Organizer "1" --> "1..*" Doctor : consults
+    Doctor "1..*" --> "1" Organizer : sends prescription to
+    Organizer "1" --> "1" Patient : forwards prescription to
+
+    %% Payment flow - full circuit
+    Patient "1" --> "1" Payment : initiates
+    Payment "1" --> "1" Organizer : received by
+    Organizer "1" --> "1..*" Doctor : forwards payment to

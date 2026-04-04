@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor M as Member
+    participant OPC as OrderProcessingClerk
+    participant CDC as CollectionDeptClerk
+    participant O as Order
+    participant P as Payment
+    participant DR as DailyRecord
+
+    M->>OPC: placeOrder()
+    OPC->>OPC: verifyMembership()
+    alt is not a member
+        OPC-->>M: sendMembershipForm()
+    else is a member
+        OPC->>O: createOrder()
+        O-->>OPC: orderConfirmed
+        OPC->>DR: saveToDailyRecord()
+        OPC-->>M: orderAcknowledged()
+
+        M->>CDC: makePayment(amount, method)
+        CDC->>P: process()
+        P-->>CDC: paymentConfirmed
+        CDC->>DR: updateRecord()
+        CDC-->>M: issueReceipt()
+    end

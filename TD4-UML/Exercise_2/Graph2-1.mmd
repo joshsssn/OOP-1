@@ -1,0 +1,109 @@
+classDiagram
+    class Member {
+        - memberId : String
+        - name : String
+        - password : String
+        - address : String
+        + placeOrder()
+        + makePayment()
+        + getProfile()
+    }
+
+    class RoyalMember {
+        - discountRate : Float
+        - priorityLevel : Int
+        + orderUnavailableItem()
+        + getDiscount()
+    }
+
+    class RegularMember {
+        - memberSince : Date
+        + placeOrder()
+    }
+
+    class Order {
+        - orderId : String
+        - dateCreated : Date
+        - status : String
+        - items : List
+        + getDetails()
+        + updateStatus()
+        + saveToRecord()
+    }
+
+    class OrderProcessingClerk {
+        - employeeId : String
+        - name : String
+        - shift : String
+        + verifyMembership()
+        + processOrder()
+        + saveToDailyRecord()
+    }
+
+    class CollectionDepartmentClerk {
+        - employeeId : String
+        - name : String
+        - department : String
+        + collectPayment()
+        + forwardToRecord()
+        + issueReceipt()
+    }
+
+    class Payment {
+        - paymentId : String
+        - amount : Float
+        - date : Date
+        - status : String
+        + process()
+        + getStatus()
+    }
+
+    class Cash {
+        - amountGiven : Float
+        - change : Float
+        + process()
+    }
+
+    class Check {
+        - checkNumber : String
+        - bankName : String
+        + process()
+    }
+
+    class BankDraft {
+        - draftNumber : String
+        - issuingBank : String
+        + process()
+    }
+
+    class DailyRecord {
+        - recordId : String
+        - date : Date
+        - entries : List
+        + addEntry()
+        + generateReport()
+    }
+
+    %% Inheritance: member types
+    Member <|-- RoyalMember
+    Member <|-- RegularMember
+
+    %% Inheritance: payment types
+    Payment <|-- Cash
+    Payment <|-- Check
+    Payment <|-- BankDraft
+
+    %% Composition: Order cannot exist without a Member
+    Member "1" *-- "0..*" Order : owns
+
+    %% Composition: Payment cannot exist without an Order
+    Order "1" *-- "0..1" Payment : triggers
+
+    %% Composition: DailyRecord is built from Orders
+    DailyRecord "1" *-- "1..*" Order : records
+
+    %% Associations: clerk interactions
+    OrderProcessingClerk "1" --> "1..*" Order : processes
+    OrderProcessingClerk "1" --> "1..*" Member : verifies
+    CollectionDepartmentClerk "1" --> "1..*" Payment : collects
+    CollectionDepartmentClerk "1" --> "1" DailyRecord : updates

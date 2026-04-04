@@ -1,0 +1,33 @@
+classDiagram
+    class Member {
+        - memberId : String
+        - name : String
+        - password : String
+        - memberType : String
+        + placeOrder()
+        + makePayment()
+        + getProfile()
+    }
+
+    class Order {
+        - orderId : String
+        - dateCreated : Date
+        - status : String
+        - items : List
+        + getDetails()
+        + updateStatus()
+        + saveToRecord()
+    }
+
+    class OrderProcessingClerk {
+        - employeeId : String
+        - name : String
+        - shift : String
+        + verifyMembership()
+        + processOrder()
+        + saveToDailyRecord()
+    }
+
+    Member "1" --> "0..*" Order : places
+    OrderProcessingClerk "1" --> "1..*" Order : processes
+    OrderProcessingClerk "1" --> "1..*" Member : verifies
